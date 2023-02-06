@@ -1,0 +1,50 @@
+.custom-tabs {
+    border-top-left-radius: 3px;
+    background-color: #f9f9f9;
+    padding: 0px 24px;
+    border-bottom: 1px solid #d6d6d6;
+}
+
+.custom-tab {
+    color:#777;
+    background-color: #fafbfc;
+    padding: 3px !important;
+    font-family: "Helvetica";
+    font-size: 20px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.custom-tab--selected {
+    color: black;
+    font-size: 22px;
+    box-shadow: 1px 1px 0px white;
+    border-left: 3px solid #e36209 !important;
+    border-right: 3px solid #e36209 !important;
+    border-top: 3px solid #e36209 !important;
+    border-radius: 8px 8px 0px 0px;
+}
+
+.custom-tab-clinical {
+    color:#777;
+    background-color: #fafbfc;
+    padding: 10px !important;
+    font-family: "Helvetica";
+    font-size: 24px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.custom-tab-clinical--selected {
+    color: black;
+    font-size: 28px;
+    box-shadow: 1px 1px 0px white;
+    border-left: 3px solid #e36209 !important;
+    border-right: 3px solid #e36209 !important;
+    border-top: 3px solid #e36209 !important;
+    border-radius: 8px 8px 0px 0px;
+}
