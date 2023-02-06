@@ -165,7 +165,7 @@ def processalldata(datadir: str):
     # processed.
     sys.stdout.write("\n > Processing data:")
     n_subj = len(_bk.bkdata.keys())
-    for i, (subj, subjdata) in enumerate(_bk.bkdata.items()):
+    for i, (subj, subjdata) in enumerate(_bk.bkdata['summary'].items()):
         # Go through the individual dates and process them.
         # Generate raw data
         sys.stdout.write(f"\n   - [{i:3d}/{n_subj:3d}] {subj:<4}: Raw ")

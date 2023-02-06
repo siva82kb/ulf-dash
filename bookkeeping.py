@@ -17,6 +17,7 @@ from datetime import timedelta as tdelta
 from datetime import datetime as dt
 from attrdict import AttrDict
 import numpy as np
+import pandas as pd
 
 import dashconfig as dcfg
 import dataio as dio
@@ -53,7 +54,8 @@ class BookKeeper(object):
         self._log = []
 
         # Check what all remains to be analysed.
-        self._bkdata = {}
+        self._bkdata = {'filetimes': self._read_filetimes(),
+                        'summary': {}}
         self.bookkeep()
 
         # Update bookkeeping file.
@@ -94,9 +96,7 @@ class BookKeeper(object):
         }
         _n = len(_subjdirs)
         sys.stdout.write("\n > Bookeeping:")
-        for i, (_subj, _dir) in enumerate(_subjdirs.items()):
-            # sys.stdout.write(f" {_subj}({i+1}/{_n})")
-            # sys.stdout.flush()
+        for _subj, _dir in _subjdirs.items():
             # Generate the details of things that have to be analyzed for this
             # subject.
             # 1. Generate the file detials for all the sensors.
@@ -116,12 +116,20 @@ class BookKeeper(object):
             # is expected from the source files.
             _procfiles = self._get_files_to_be_processed(_exptdfiles)
             if _procfiles:
-                self._bkdata[_subj] = _procfiles
+                self._bkdata['summary'][_subj] = _procfiles
             if DEBUG:
                 break
         # Update bookkeeping 
         sys.stdout.write("\n > Bookeeping: Done")
 
+    def _read_filetimes(self):
+        # Read the current bookkeeping data.
+        try:
+            with open(self.bkfile, "r") as fh:
+                return json.load(fh)['filetimes']
+        except KeyError:
+            return {}
+    
     def _update_bookkeping_file(self):
         # Create a new dict without datetime objects.
         _newbkdata = {
@@ -129,7 +137,7 @@ class BookKeeper(object):
                 k.strftime("%D-%T") if k != 'summary' else k : v.copy()
                 for k, v in data.items()
             }
-            for subj, data in self.bkdata.items()
+            for subj, data in self.bkdata['summary'].items()
         }
         
         # Read the current bookkeeping data.
@@ -137,7 +145,10 @@ class BookKeeper(object):
             _filedata = json.load(fh)
         
         # Append new data
-        _filedata[self._currsess] = {
+        _filedata['filetimes'] = self._bkdata['filetimes']
+        if 'summary' not in _filedata:
+            _filedata['summary'] = {}
+        _filedata['summary'][self._currsess] = {
             'bkdetails': _newbkdata,
             'analysisparams': self.analysisparams,
         }
@@ -145,6 +156,9 @@ class BookKeeper(object):
         # Write it back to disk
         with open(self.bkfile, "w") as fh:
             json.dump(_filedata, fh, indent=4)
+        
+        # with open(self.bkfile, "w") as fh:
+        #     json.dump(self._bkdata['filetimes'], fh, indent=4)
     
     def _get_files_to_be_processed(self, exptdfiles: dict) -> dict:
         """Check if the expected files are on disk, if so, then return an empty
@@ -326,27 +340,30 @@ class BookKeeper(object):
     def _get_loc_file_details(self, dir, extn):
         # Returns the details of of the different sensor data files at the
         # different locations.
-        # _dispchars = ('-', '\\', '|', r'/', 'o')
-        # _inx = 0
         sys.stdout.write("\n")
         _locfiles = {_l:[] for _l in self.dataparams.locid}
         for _l in self.dataparams.locid:
             _lfiles = glob.glob(f"{dir}/*{_l}*.{extn}")
             # Get the start and end times for the sensors files.
             for _lf in _lfiles:
-                # sys.stdout.write(f"\b\b\b[{_dispchars[_inx % 5]}]")
-                # _inx += 1
                 sys.stdout.write(f"\r   - {_lf}")
                 sys.stdout.flush()
-                _data = dio.read_sensor_data(
-                    _lf,
-                    sensname=self.dataparams.sensor,
-                    datatype=self.dataparams.data_type
-                )
+                # Check if file exists in the filetime dict.
+                if _lf not in self._bkdata['filetimes']:
+                    # File time does not exist. Read file and update file time.
+                    _data = dio.read_sensor_data(
+                        _lf,
+                        sensname=self.dataparams.sensor,
+                        datatype=self.dataparams.data_type
+                    )
+                    self._bkdata['filetimes'][_lf] = [
+                        to_datetime(_data['TimeStamp'].values[0]).strftime("%Y-%m-%d %H:%M:%S.%f"),
+                        to_datetime(_data['TimeStamp'].values[-1]).strftime("%Y-%m-%d %H:%M:%S.%f")
+                    ]
                 # Get the start and end timestamps.
                 _locfiles[_l].append([
-                    _lf, _data['TimeStamp'].values[0],
-                    _data['TimeStamp'].values[-1]
+                    _lf, pd.to_datetime(self._bkdata['filetimes'][_lf][0], format="%Y-%m-%d %H:%M:%S.%f").to_numpy(),
+                    pd.to_datetime(self._bkdata['filetimes'][_lf][1], format="%Y-%m-%d %H:%M:%S.%f").to_numpy()
                 ])
         return _locfiles
 

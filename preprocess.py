@@ -29,7 +29,7 @@ import dataio
 import bookkeeping
 from bookkeeping import to_datetime
 
-from tempsupport import grav_sub_mag
+from tempsupport import (from_gmac, grav_sub_mag)
 
 
 def generate_save_raw_dayfile(day:datetime.date,
@@ -65,7 +65,6 @@ def generate_save_raw_dayfile(day:datetime.date,
         daydf = pd.DataFrame.from_dict({
             "TimeStamp": list(map(bookkeeping.to_datetime, _dayts))
         }).set_index('TimeStamp')
-        print(locsrcfiles)
         for srcfl in locsrcfiles:
             # Read the source file.
             data = dataio.read_sensor_data(srcfl, sensname=dataparams.sensor,
@@ -430,7 +429,7 @@ def compute_ulfuncavrg_measures(rawdf: pd.DataFrame,
             usesig=colval.values,
             windur=analysisparams['avgwindur'],
             winshift=analysisparams['avgwinshift'],
-            sample_t=analysisparams["samptr"]['raw'][0]
+            sample_t=analysisparams["samptr"]['ulfuncinst'][0]
         )
         _useavrgdf[colname] = _auu
 
@@ -447,7 +446,7 @@ def compute_ulfuncavrg_measures(rawdf: pd.DataFrame,
             usesig=ulfuncinstdf['use'][_ucol].values,
             windur=analysisparams['avgwindur'],
             winshift=analysisparams['avgwinshift'],
-            sample_t=analysisparams["samptr"]['raw'][0]
+            sample_t=analysisparams["samptr"]['ulfuncinst'][0]
         )
         _intavrgdf[colname] = _aiu
 
@@ -498,7 +497,7 @@ def compute_avrg_of_laterality_index(latinxinstdf: pd.DataFrame,
         _inx, _ali = _test.average_latindex(_colval.values,
                                             windur=analysisparams['avgwindur'],
                                             winshift=analysisparams['avgwinshift'],
-                                            sample_t=analysisparams["samptr"]['raw'][0])
+                                            sample_t=analysisparams["samptr"]['ulfuncinst'][0])
         _uselidf[_colname] = _ali
 
     # Go through the int columns first and compute the average laterality 
@@ -508,7 +507,7 @@ def compute_avrg_of_laterality_index(latinxinstdf: pd.DataFrame,
         _inx, _ali = _test.average_latindex(_colval.values,
                                             windur=analysisparams['avgwindur'],
                                             winshift=analysisparams['avgwinshift'],
-                                            sample_t=analysisparams["samptr"]['raw'][0])
+                                            sample_t=analysisparams["samptr"]['ulfuncinst'][0])
         _intlidf[_colname] = _ali
 
     # Add timestamps.
@@ -645,10 +644,10 @@ def arimu_raw_uluse(datadf: pd.DataFrame,
     ulusedf = pd.DataFrame()
     
     # GMAC
-    _, _uluse = ulfunc.uluse.from_gmac(acc_forearm=datadf['ax'],
-                                       acc_ortho1=datadf['ay'],
-                                       acc_ortho2=datadf['az'],
-                                       sampfreq=dcfg.SUPPORTED_SENSORS['ARIMU']['Raw Data']['samplingrate'])
+    _, _uluse = from_gmac(acc_forearm=datadf['ay'],
+                          acc_ortho1=datadf['ax'],
+                          acc_ortho2=datadf['az'],
+                          sampfreq=dcfg.SUPPORTED_SENSORS['ARIMU']['Raw Data']['samplingrate'])
     ulusedf['gmac'] = _uluse
     return ulusedf
 

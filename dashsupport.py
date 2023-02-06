@@ -62,7 +62,7 @@ def gather_data_details(datadir: str) -> dict:
     with open(f"{datadir}/{dcfg.OUTPUT_DIR}/bookkeeping.json", "r") as fh:
         bkdata = json.load(fh)
     recent_date = max(map(lambda x: dt.strptime(x, '%m/%d/%y %H:%M:%S'),
-                          bkdata.keys()))
+                          bkdata['summary'].keys()))
 
     return {'datadir': datadir,
             'analysis_params_list': analysisparams_list,
